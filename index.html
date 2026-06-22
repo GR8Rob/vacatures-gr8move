@@ -599,7 +599,7 @@
     if (!val) return null;
     const arr = Array.isArray(val) ? val : String(val).split(',').map(s => s.trim()).filter(Boolean);
     if (!arr.length) return null;
-    return arr;
+    return arr.map(s => s === 'Overal' ? 'Overall' : s);
   }
 
   function renderVacatures(list) {
