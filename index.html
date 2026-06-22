@@ -395,7 +395,7 @@
       netSalary: 'Netto salaris (indicatie)', workDays: 'Werkdagen', payDay: 'Betaaldag',
       contractType: 'Type contract', overtime: 'Overwerk', accommodation: 'Accommodatie',
       transport: 'Vervoer', travelDist: 'Reisafstand', healthIns: 'Zorgverzekering', ppe: 'PBM',
-      spots: (n) => n + ' plekken', pw: 'Toegangscode', pwBtn: 'Toegang',
+      spots: (n) => n === 1 ? '1 plek' : n + ' plekken', pw: 'Toegangscode', pwBtn: 'Toegang',
       pwSub: 'Vacatureportaal — exclusief voor partners', pwErr: 'Onjuiste toegangscode.',
       pwEmpty: 'Vul een toegangscode in.',
     },
@@ -412,7 +412,7 @@
       netSalary: 'Net salary (indication)', workDays: 'Working days', payDay: 'Payment day',
       contractType: 'Contract type', overtime: 'Overtime', accommodation: 'Accommodation',
       transport: 'Transport', travelDist: 'Travel distance', healthIns: 'Health insurance', ppe: 'PPE',
-      spots: (n) => n + ' positions', pw: 'Access code', pwBtn: 'Enter',
+      spots: (n) => n === 1 ? '1 position' : n + ' positions', pw: 'Access code', pwBtn: 'Enter',
       pwSub: 'Vacancy portal — exclusive for partners', pwErr: 'Incorrect access code.',
       pwEmpty: 'Please enter an access code.',
     }
@@ -559,7 +559,6 @@
       const metaItems = [
         v.locatie ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${v.locatie}</div>` : '',
         v.uren_per_week ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${v.uren_per_week} ${lang==='en'?'hrs/week':'uur/week'}</div>` : '',
-        v.bruto_uurloon ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${v.bruto_uurloon}</div>` : '',
         `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${t('start')} ${startTxt}</div>`,
       ].filter(Boolean).join('');
 
@@ -613,7 +612,7 @@
             <div class="vac-meta">${metaItems}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-            ${v.plekken > 1 ? `<span class="vac-plekken">${t('spots', v.plekken)}</span>` : ''}
+            ${v.plekken ? `<span class="vac-plekken">${t('spots', v.plekken)}</span>` : ''}
             <svg class="vac-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
