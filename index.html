@@ -159,6 +159,23 @@
       min-width: 200px;
     }
     .filter-input:focus { border-color: var(--green); }
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filter-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--grey-200);
+      background: var(--white);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Quattrocento Sans', sans-serif;
+      color: var(--grey-500);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+      letter-spacing: .3px;
+    }
+    .filter-chip:hover { border-color: var(--green); color: var(--green); }
+    .filter-chip.active { background: var(--green); border-color: var(--green); color: #fff; }
 
     /* ── JOB CARDS ── */
     #vac-list { display: flex; flex-direction: column; gap: 16px; }
@@ -365,6 +382,11 @@
 
     <div class="filters">
       <input class="filter-input" type="text" id="filter-zoek" placeholder="Zoeken op functie of locatie…" />
+      <div class="filter-chips" id="filter-chips">
+        <button class="filter-chip" data-start="zsm">Z.s.m.</button>
+        <button class="filter-chip" data-start="week">Komende week</button>
+        <button class="filter-chip" data-start="later">Daarna</button>
+      </div>
     </div>
 
     <div id="loading"><div class="spinner"></div> Vacatures laden…</div>
@@ -395,7 +417,9 @@
       netSalary: 'Netto salaris (indicatie)', workDays: 'Werkdagen', payDay: 'Betaaldag',
       contractType: 'Type contract', overtime: 'Overwerk', accommodation: 'Accommodatie',
       transport: 'Vervoer', travelDist: 'Reisafstand', healthIns: 'Zorgverzekering', ppe: 'PBM',
-      spots: (n) => n === 1 ? '1 plek' : n + ' plekken', pw: 'Toegangscode', pwBtn: 'Toegang',
+      spots: (n) => n === 1 ? '1 plek' : n + ' plekken',
+      chipZsm: 'Z.s.m.', chipWeek: 'Komende week', chipLater: 'Daarna',
+      pw: 'Toegangscode', pwBtn: 'Toegang',
       pwSub: 'Vacatureportaal — exclusief voor partners', pwErr: 'Onjuiste toegangscode.',
       pwEmpty: 'Vul een toegangscode in.',
     },
@@ -412,7 +436,9 @@
       netSalary: 'Net salary (indication)', workDays: 'Working days', payDay: 'Payment day',
       contractType: 'Contract type', overtime: 'Overtime', accommodation: 'Accommodation',
       transport: 'Transport', travelDist: 'Travel distance', healthIns: 'Health insurance', ppe: 'PPE',
-      spots: (n) => n === 1 ? '1 position' : n + ' positions', pw: 'Access code', pwBtn: 'Enter',
+      spots: (n) => n === 1 ? '1 position' : n + ' positions',
+      chipZsm: 'ASAP', chipWeek: 'Next week', chipLater: 'Later',
+      pw: 'Access code', pwBtn: 'Enter',
       pwSub: 'Vacancy portal — exclusive for partners', pwErr: 'Incorrect access code.',
       pwEmpty: 'Please enter an access code.',
     }
@@ -436,6 +462,9 @@
     document.getElementById('no-vac').textContent         = t('noVac');
     const cnt = allVacatures.length;
     if (cnt) document.getElementById('page-sub-count').textContent = t('subCount', cnt);
+    document.querySelector('.filter-chip[data-start="zsm"]').textContent  = t('chipZsm');
+    document.querySelector('.filter-chip[data-start="week"]').textContent = t('chipWeek');
+    document.querySelector('.filter-chip[data-start="later"]').textContent = t('chipLater');
     if (allVacatures.length) renderVacatures(allVacatures);
     // Password screen labels
     document.getElementById('pw-sub').textContent  = t('pwSub');
@@ -511,16 +540,42 @@
     document.getElementById('page-sub-count').textContent = t('subCount', data.length);
     renderVacatures(data);
 
-    document.getElementById('filter-zoek').addEventListener('input', function() {
-      const q = this.value.toLowerCase();
-      const filtered = allVacatures.filter(v =>
-        (v.titel || '').toLowerCase().includes(q) ||
-        (v.titel_en || '').toLowerCase().includes(q) ||
-        (v.locatie || '').toLowerCase().includes(q) ||
-        (v.werkzaamheden || '').toLowerCase().includes(q) ||
-        (v.werkzaamheden_en || '').toLowerCase().includes(q)
-      );
-      renderVacatures(filtered);
+    let activeChip = null;
+
+    function applyFilters() {
+      const q = document.getElementById('filter-zoek').value.toLowerCase();
+      const today = new Date(); today.setHours(0,0,0,0);
+      const in7 = new Date(today); in7.setDate(today.getDate() + 7);
+      let list = allVacatures.filter(v => {
+        if (q) {
+          const inTitle = (v.titel || '').toLowerCase().includes(q) || (v.titel_en || '').toLowerCase().includes(q) || ((v.translations?.en?.titel) || '').toLowerCase().includes(q);
+          const inLoc   = (v.locatie || '').toLowerCase().includes(q);
+          const inWerk  = (v.werkzaamheden || '').toLowerCase().includes(q);
+          if (!inTitle && !inLoc && !inWerk) return false;
+        }
+        if (activeChip === 'zsm')   return !v.startdatum;
+        if (activeChip === 'week')  { if (!v.startdatum) return false; const d = new Date(v.startdatum); return d >= today && d <= in7; }
+        if (activeChip === 'later') { if (!v.startdatum) return false; const d = new Date(v.startdatum); return d > in7; }
+        return true;
+      });
+      renderVacatures(list);
+    }
+
+    document.getElementById('filter-zoek').addEventListener('input', applyFilters);
+
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const val = this.dataset.start;
+        if (activeChip === val) {
+          activeChip = null;
+          this.classList.remove('active');
+        } else {
+          activeChip = val;
+          document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+        }
+        applyFilters();
+      });
     });
   }
 
