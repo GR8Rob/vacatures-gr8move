@@ -547,8 +547,10 @@
     noVac.style.display = 'none';
 
     container.innerHTML = list.map(v => {
-      const titel = (lang === 'en' && v.titel_en) ? v.titel_en : (v.titel || '—');
-      const werkz = (lang === 'en' && v.werkzaamheden_en) ? v.werkzaamheden_en : (v.werkzaamheden || null);
+      const tr = (lang === 'en' && v.translations?.en) ? v.translations.en : {};
+      const vt = (f) => tr[f] || v[f] || null; // translated field with NL fallback
+      const titel = (lang === 'en' ? (tr.titel || v.titel) : v.titel) || '—';
+      const werkz = vt('werkzaamheden');
       const locale = lang === 'en' ? 'en-GB' : 'nl-NL';
       const startTxt = v.startdatum
         ? new Date(v.startdatum).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
@@ -568,7 +570,7 @@
           <div class="detail-field-value" style="white-space:pre-line;">${werkz}</div>
         </div>` : '';
 
-      const ervaringTags = tags(v.ervaring);
+      const ervaringTags = tags(tr.ervaring || v.ervaring);
       const taalTags = tags(v.taal);
       const certTags = tags(v.certificaten);
 
@@ -581,24 +583,24 @@
 
       const arbeidsHtml = [
         v.uren_per_week ? `<div class="detail-field"><div class="detail-field-label">${t('hoursPerWeek')}</div><div class="detail-field-value">${v.uren_per_week} ${lang==='en'?'hrs':'uur'}</div></div>` : '',
-        fmt(v.werkperiode) ? `<div class="detail-field"><div class="detail-field-label">${t('workPeriod')}</div><div class="detail-field-value">${v.werkperiode}</div></div>` : '',
+        vt('werkperiode') ? `<div class="detail-field"><div class="detail-field-label">${t('workPeriod')}</div><div class="detail-field-value">${vt('werkperiode')}</div></div>` : '',
         fmt(v.bruto_uurloon) ? `<div class="detail-field"><div class="detail-field-label">${t('grossRate')}</div><div class="detail-field-value">${v.bruto_uurloon}</div></div>` : '',
         fmt(v.netto_salaris) ? `<div class="detail-field"><div class="detail-field-label">${t('netSalary')}</div><div class="detail-field-value">${v.netto_salaris}</div></div>` : '',
-        fmt(v.werkdagen) ? `<div class="detail-field"><div class="detail-field-label">${t('workDays')}</div><div class="detail-field-value">${v.werkdagen}</div></div>` : '',
-        fmt(v.betaaldag) ? `<div class="detail-field"><div class="detail-field-label">${t('payDay')}</div><div class="detail-field-value">${v.betaaldag}</div></div>` : '',
-        fmt(v.contract_type) ? `<div class="detail-field"><div class="detail-field-label">${t('contractType')}</div><div class="detail-field-value">${v.contract_type}</div></div>` : '',
-        fmt(v.overwerk) ? `<div class="detail-field"><div class="detail-field-label">${t('overtime')}</div><div class="detail-field-value">${v.overwerk}</div></div>` : '',
+        vt('werkdagen') ? `<div class="detail-field"><div class="detail-field-label">${t('workDays')}</div><div class="detail-field-value">${vt('werkdagen')}</div></div>` : '',
+        vt('betaaldag') ? `<div class="detail-field"><div class="detail-field-label">${t('payDay')}</div><div class="detail-field-value">${vt('betaaldag')}</div></div>` : '',
+        vt('type_contract') ? `<div class="detail-field"><div class="detail-field-label">${t('contractType')}</div><div class="detail-field-value">${vt('type_contract')}</div></div>` : '',
+        vt('overwerk') ? `<div class="detail-field"><div class="detail-field-label">${t('overtime')}</div><div class="detail-field-value">${vt('overwerk')}</div></div>` : '',
       ].filter(Boolean).join('');
 
-      const voertuigTags = tags(v.vervoer);
-      const pbmTags = tags(v.pbm);
+      const voertuigTags = tags(tr.vervoer || v.vervoer);
+      const pbmTags = tags(tr.persoonlijke_bescherming || v.persoonlijke_bescherming || v.pbm);
       const reisStr = v.reis_km && v.reis_min ? `${v.reis_km} km / ${v.reis_min} min` : v.reis_km ? `${v.reis_km} km` : v.reis_min ? `${v.reis_min} min` : null;
 
       const voordelenHtml = [
-        fmt(v.accommodatie) ? `<div class="detail-field"><div class="detail-field-label">${t('accommodation')}</div><div class="detail-field-value">${v.accommodatie}</div></div>` : '',
+        vt('accommodatie') ? `<div class="detail-field"><div class="detail-field-label">${t('accommodation')}</div><div class="detail-field-value">${vt('accommodatie')}</div></div>` : '',
         voertuigTags ? `<div class="detail-field"><div class="detail-field-label">${t('transport')}</div><div class="detail-tags">${voertuigTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
         reisStr ? `<div class="detail-field"><div class="detail-field-label">${t('travelDist')}</div><div class="detail-field-value">${reisStr}</div></div>` : '',
-        fmt(v.zorgverzekering) ? `<div class="detail-field"><div class="detail-field-label">${t('healthIns')}</div><div class="detail-field-value">${v.zorgverzekering}</div></div>` : '',
+        vt('zorgverzekering') ? `<div class="detail-field"><div class="detail-field-label">${t('healthIns')}</div><div class="detail-field-value">${vt('zorgverzekering')}</div></div>` : '',
         pbmTags ? `<div class="detail-field"><div class="detail-field-label">${t('ppe')}</div><div class="detail-tags">${pbmTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
       ].filter(Boolean).join('');
 
