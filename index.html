@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vacatures — GR8 Move</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #02811f;
+      --green-dark: #016a19;
+      --green-light: #e6f4ea;
+      --black: #111;
+      --grey-100: #f4f5f7;
+      --grey-200: #e8eaed;
+      --grey-400: #9aa0ac;
+      --grey-600: #5f6672;
+      --white: #fff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--grey-100);
+      color: var(--black);
+      min-height: 100vh;
+    }
+
+    /* ── PASSWORD SCREEN ── */
+    #pw-screen {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #01600f 0%, #02811f 60%, #03a226 100%);
+      z-index: 100;
+    }
+    #pw-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 48px 40px 40px;
+      width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+    #pw-logo {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    #pw-sub {
+      font-size: 13px;
+      color: var(--grey-400);
+      margin-bottom: 32px;
+    }
+    #pw-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--grey-600);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+    #pw-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--grey-200);
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: monospace;
+      letter-spacing: 2px;
+    }
+    #pw-input:focus { border-color: var(--green); }
+    #pw-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #pw-btn:hover { background: var(--green-dark); }
+    #pw-error {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #c0392b;
+      min-height: 18px;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    #app { display: none; }
+
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--grey-200);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: -0.3px;
+    }
+    .header-tagline {
+      font-size: 13px;
+      color: var(--grey-400);
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--black);
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 14px;
+      color: var(--grey-600);
+      margin-bottom: 32px;
+    }
+
+    /* ── FILTERS ── */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .filter-input {
+      padding: 9px 14px;
+      border: 1.5px solid var(--grey-200);
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      background: var(--white);
+      min-width: 200px;
+    }
+    .filter-input:focus { border-color: var(--green); }
+
+    /* ── JOB CARDS ── */
+    #vac-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .vac-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1.5px solid var(--grey-200);
+      overflow: hidden;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      cursor: pointer;
+    }
+    .vac-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-color: var(--green);
+    }
+    .vac-card-header {
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .vac-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 6px;
+    }
+    .vac-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 13px;
+      color: var(--grey-600);
+    }
+    .vac-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .vac-meta-item svg { flex-shrink: 0; opacity: 0.6; }
+    .vac-badge {
+      display: inline-block;
+      background: var(--green-light);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .vac-plekken {
+      background: var(--green);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .vac-chevron {
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      color: var(--grey-400);
+    }
+    .vac-card.open .vac-chevron { transform: rotate(180deg); }
+
+    /* ── DETAIL EXPAND ── */
+    .vac-detail {
+      display: none;
+      border-top: 1px solid var(--grey-100);
+      padding: 24px;
+    }
+    .vac-card.open .vac-detail { display: block; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--grey-400);
+      border-bottom: 1px solid var(--grey-200);
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+    }
+    .detail-field { margin-bottom: 12px; }
+    .detail-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--grey-400);
+      margin-bottom: 2px;
+    }
+    .detail-field-value {
+      font-size: 14px;
+      color: var(--black);
+      line-height: 1.5;
+    }
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .detail-tag {
+      background: var(--grey-100);
+      color: var(--grey-600);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .apply-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 20px;
+      border-top: 1px solid var(--grey-100);
+    }
+    .apply-text { font-size: 13px; color: var(--grey-600); }
+    .apply-btn {
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.15s;
+    }
+    .apply-btn:hover { background: var(--green-dark); }
+
+    #no-vac {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--grey-400);
+      font-size: 15px;
+    }
+
+    /* ── LOADING ── */
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2.5px solid var(--grey-200);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--grey-400);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div id="pw-screen">
+  <div id="pw-card">
+    <div id="pw-logo">GR8 Move</div>
+    <div id="pw-sub">Vacatureportaal — exclusief voor partners</div>
+    <label id="pw-label" for="pw-input">Toegangscode</label>
+    <input type="password" id="pw-input" placeholder="••••••••" autocomplete="current-password" />
+    <button id="pw-btn">Toegang</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div class="header-logo">GR8 Move</div>
+    <div class="header-tagline">Actuele vacatures</div>
+  </header>
+  <main>
+    <div class="page-title">Openstaande vacatures</div>
+    <div class="page-sub" id="page-sub-count">Actuele vacatures van GR8 Move</div>
+
+    <div class="filters">
+      <input class="filter-input" type="text" id="filter-zoek" placeholder="Zoeken op functie of locatie…" />
+    </div>
+
+    <div id="loading"><div class="spinner"></div> Vacatures laden…</div>
+    <div id="vac-list"></div>
+    <div id="no-vac" style="display:none;">Geen vacatures gevonden.</div>
+  </main>
+</div>
+
+<script>
+  const SUPABASE_URL     = 'https://ilohrydvgmrkzzulbvmu.supabase.co';
+  const SUPABASE_ANON    = 'sb_publishable_VGfOAz7jJDgyMLYbyfsOjg_9dmAAdL7';
+  const CONTACT_EMAIL    = 'info@gr8move.nl';
+  const SESSION_KEY      = 'gr8_vacatures_auth';
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function checkPassword(pw) {
+    const { data, error } = await db.from('app_instellingen')
+      .select('waarde').eq('sleutel', 'vacatures_wachtwoord').maybeSingle();
+    if (error || !data) return false;
+    const hash = await sha256(pw);
+    return hash === data.waarde;
+  }
+
+  async function init() {
+    // Check saved session
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved === 'ok') { showApp(); return; }
+    setupPasswordScreen();
+  }
+
+  function setupPasswordScreen() {
+    const btn   = document.getElementById('pw-btn');
+    const input = document.getElementById('pw-input');
+    const err   = document.getElementById('pw-error');
+
+    async function tryLogin() {
+      const pw = input.value.trim();
+      if (!pw) { err.textContent = 'Vul een toegangscode in.'; return; }
+      btn.textContent = '…'; btn.disabled = true; err.textContent = '';
+      const ok = await checkPassword(pw);
+      if (ok) {
+        sessionStorage.setItem(SESSION_KEY, 'ok');
+        showApp();
+      } else {
+        err.textContent = 'Onjuiste toegangscode.';
+        btn.textContent = 'Toegang'; btn.disabled = false;
+        input.select();
+      }
+    }
+
+    btn.addEventListener('click', tryLogin);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  }
+
+  async function showApp() {
+    document.getElementById('pw-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    await loadVacatures();
+  }
+
+  let allVacatures = [];
+
+  async function loadVacatures() {
+    const { data, error } = await db.from('vacatures')
+      .select('id, titel, locatie, plekken, startdatum, bruto_uurloon, netto_salaris, uren_per_week, werkdagen, werkperiode, contract_type, overwerk, werkzaamheden, ervaring, taal, certificaten, rijbewijs_b, accommodatie, vervoer, reis_km, reis_min, zorgverzekering, pbm, betaaldag')
+      .eq('status', 'Open')
+      .order('startdatum', { ascending: true });
+
+    document.getElementById('loading').style.display = 'none';
+
+    if (error || !data || data.length === 0) {
+      document.getElementById('no-vac').style.display = 'block';
+      return;
+    }
+
+    allVacatures = data;
+    document.getElementById('page-sub-count').textContent =
+      data.length + ' open ' + (data.length === 1 ? 'vacature' : 'vacatures');
+    renderVacatures(data);
+
+    document.getElementById('filter-zoek').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      const filtered = allVacatures.filter(v =>
+        (v.titel || '').toLowerCase().includes(q) ||
+        (v.locatie || '').toLowerCase().includes(q) ||
+        (v.werkzaamheden || '').toLowerCase().includes(q)
+      );
+      renderVacatures(filtered);
+    });
+  }
+
+  function fmt(val, fallback) {
+    return val && String(val).trim() ? val : (fallback || null);
+  }
+
+  function tags(val) {
+    if (!val) return null;
+    const arr = Array.isArray(val) ? val : String(val).split(',').map(s => s.trim()).filter(Boolean);
+    if (!arr.length) return null;
+    return arr;
+  }
+
+  function renderVacatures(list) {
+    const container = document.getElementById('vac-list');
+    const noVac = document.getElementById('no-vac');
+
+    if (!list.length) {
+      container.innerHTML = '';
+      noVac.style.display = 'block';
+      return;
+    }
+    noVac.style.display = 'none';
+
+    container.innerHTML = list.map(v => {
+      const startTxt = v.startdatum
+        ? new Date(v.startdatum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+        : 'Z.s.m.';
+
+      const metaItems = [
+        v.locatie ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${v.locatie}</div>` : '',
+        v.uren_per_week ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${v.uren_per_week} uur/week</div>` : '',
+        v.bruto_uurloon ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${v.bruto_uurloon}</div>` : '',
+        `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Start: ${startTxt}</div>`,
+      ].filter(Boolean).join('');
+
+      // Detail sections
+      const werkzaamhedenHtml = fmt(v.werkzaamheden) ? `
+        <div class="detail-field">
+          <div class="detail-field-label">Werkzaamheden</div>
+          <div class="detail-field-value" style="white-space:pre-line;">${v.werkzaamheden}</div>
+        </div>` : '';
+
+      const ervaringTags = tags(v.ervaring);
+      const taalTags = tags(v.taal);
+      const certTags = tags(v.certificaten);
+
+      const vereistenHtml = [
+        ervaringTags ? `<div class="detail-field"><div class="detail-field-label">Ervaring</div><div class="detail-tags">${ervaringTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+        taalTags ? `<div class="detail-field"><div class="detail-field-label">Taal</div><div class="detail-tags">${taalTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+        certTags ? `<div class="detail-field"><div class="detail-field-label">Certificaten</div><div class="detail-tags">${certTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+        fmt(v.rijbewijs_b) === 'Ja' ? `<div class="detail-field"><div class="detail-field-label">Rijbewijs B</div><div class="detail-field-value">Vereist</div></div>` : '',
+      ].filter(Boolean).join('');
+
+      const arbeidsHtml = [
+        v.uren_per_week ? `<div class="detail-field"><div class="detail-field-label">Uren per week</div><div class="detail-field-value">${v.uren_per_week} uur</div></div>` : '',
+        fmt(v.werkperiode) ? `<div class="detail-field"><div class="detail-field-label">Werkperiode</div><div class="detail-field-value">${v.werkperiode}</div></div>` : '',
+        fmt(v.bruto_uurloon) ? `<div class="detail-field"><div class="detail-field-label">Bruto uurloon</div><div class="detail-field-value">${v.bruto_uurloon}</div></div>` : '',
+        fmt(v.netto_salaris) ? `<div class="detail-field"><div class="detail-field-label">Netto salaris (indicatie)</div><div class="detail-field-value">${v.netto_salaris}</div></div>` : '',
+        fmt(v.werkdagen) ? `<div class="detail-field"><div class="detail-field-label">Werkdagen</div><div class="detail-field-value">${v.werkdagen}</div></div>` : '',
+        fmt(v.betaaldag) ? `<div class="detail-field"><div class="detail-field-label">Betaaldag</div><div class="detail-field-value">${v.betaaldag}</div></div>` : '',
+        fmt(v.contract_type) ? `<div class="detail-field"><div class="detail-field-label">Type contract</div><div class="detail-field-value">${v.contract_type}</div></div>` : '',
+        fmt(v.overwerk) ? `<div class="detail-field"><div class="detail-field-label">Overwerk</div><div class="detail-field-value">${v.overwerk}</div></div>` : '',
+      ].filter(Boolean).join('');
+
+      const voertuigTags = tags(v.vervoer);
+      const pbmTags = tags(v.pbm);
+      const reisStr = v.reis_km && v.reis_min ? `${v.reis_km} km / ${v.reis_min} min` : v.reis_km ? `${v.reis_km} km` : v.reis_min ? `${v.reis_min} min` : null;
+
+      const voordelenHtml = [
+        fmt(v.accommodatie) ? `<div class="detail-field"><div class="detail-field-label">Accommodatie</div><div class="detail-field-value">${v.accommodatie}</div></div>` : '',
+        voertuigTags ? `<div class="detail-field"><div class="detail-field-label">Vervoer</div><div class="detail-tags">${voertuigTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+        reisStr ? `<div class="detail-field"><div class="detail-field-label">Reisafstand</div><div class="detail-field-value">${reisStr}</div></div>` : '',
+        fmt(v.zorgverzekering) ? `<div class="detail-field"><div class="detail-field-label">Zorgverzekering</div><div class="detail-field-value">${v.zorgverzekering}</div></div>` : '',
+        pbmTags ? `<div class="detail-field"><div class="detail-field-label">Persoonlijke beschermingsmiddelen</div><div class="detail-tags">${pbmTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+      ].filter(Boolean).join('');
+
+      const hasDetail = werkzaamhedenHtml || vereistenHtml || arbeidsHtml || voordelenHtml;
+
+      return `<div class="vac-card" data-id="${v.id}">
+        <div class="vac-card-header">
+          <div style="flex:1;min-width:0;">
+            <div class="vac-title">${v.titel || '—'}</div>
+            <div class="vac-meta">${metaItems}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+            ${v.plekken > 1 ? `<span class="vac-plekken">${v.plekken} plekken</span>` : ''}
+            <svg class="vac-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        ${hasDetail ? `<div class="vac-detail">
+          ${werkzaamhedenHtml ? `<div style="margin-bottom:24px;">${werkzaamhedenHtml}</div>` : ''}
+          <div class="detail-grid">
+            ${vereistenHtml ? `<div><div class="detail-section-title">Vereisten</div>${vereistenHtml}</div>` : '<div></div>'}
+            ${arbeidsHtml ? `<div><div class="detail-section-title">Arbeidsvoorwaarden</div>${arbeidsHtml}</div>` : '<div></div>'}
+          </div>
+          ${voordelenHtml ? `<div><div class="detail-section-title">Overige voordelen</div><div class="detail-grid">${voordelenHtml}</div></div>` : ''}
+          <div class="apply-bar">
+            <div class="apply-text">Interesse? Neem contact op met GR8 Move.</div>
+            <a class="apply-btn" href="mailto:${CONTACT_EMAIL}?subject=Sollicitatie: ${encodeURIComponent(v.titel || 'Vacature')}">Solliciteer</a>
+          </div>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+
+    // Toggle expand
+    container.querySelectorAll('.vac-card').forEach(card => {
+      card.querySelector('.vac-card-header').addEventListener('click', () => {
+        card.classList.toggle('open');
+      });
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>
