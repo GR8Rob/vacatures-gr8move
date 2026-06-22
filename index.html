@@ -367,9 +367,8 @@
 <!-- MAIN APP -->
 <div id="app">
   <header>
-    <div class="header-logo">GR8 Move</div>
+    <div class="header-logo"><img src="/favicon.svg" alt="GR8 Move" style="height:36px;width:36px;border-radius:6px;" /></div>
     <div style="display:flex;align-items:center;gap:16px;">
-      <div class="header-tagline" id="header-tagline">Actuele vacatures</div>
       <div style="display:flex;border:1.5px solid var(--grey-200);border-radius:6px;overflow:hidden;font-size:12px;font-weight:700;">
         <button id="lang-nl" onclick="setLang('nl')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;cursor:pointer;">NL</button>
         <button id="lang-en" onclick="setLang('en')" style="padding:4px 10px;background:#fff;color:var(--grey-600);border:none;cursor:pointer;">EN</button>
@@ -458,7 +457,6 @@
     document.getElementById('lang-nl').style.color      = l === 'nl' ? '#fff' : 'var(--grey-600)';
     document.getElementById('lang-en').style.background = l === 'en' ? 'var(--green)' : '#fff';
     document.getElementById('lang-en').style.color      = l === 'en' ? '#fff' : 'var(--grey-600)';
-    document.getElementById('header-tagline').textContent = t('tagline');
     document.getElementById('page-title').textContent     = t('pageTitle');
     document.getElementById('filter-zoek').placeholder    = t('placeholder');
     document.getElementById('no-vac').textContent         = t('noVac');
@@ -682,10 +680,6 @@
             ${arbeidsHtml ? `<div><div class="detail-section-title">${t('conditions')}</div>${arbeidsHtml}</div>` : '<div></div>'}
           </div>
           ${voordelenHtml ? `<div><div class="detail-section-title">${t('benefits')}</div><div class="detail-grid">${voordelenHtml}</div></div>` : ''}
-          <div class="apply-bar">
-            <div class="apply-text">${t('applyText')}</div>
-            <a class="apply-btn" href="mailto:${CONTACT_EMAIL}?subject=${lang==='en'?'Application':'Sollicitatie'}: ${encodeURIComponent(titel)}">${t('applyBtn')}</a>
-          </div>
         </div>` : ''}
       </div>`;
     }).join('');
