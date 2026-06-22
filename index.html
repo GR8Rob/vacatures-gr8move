@@ -528,7 +528,7 @@
     const { data, error } = await db.from('vacatures')
       .select('*')
       .eq('status', 'Open')
-      .order('startdatum', { ascending: true });
+      .order('created_at', { ascending: false });
 
     document.getElementById('loading').style.display = 'none';
 
