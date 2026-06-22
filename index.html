@@ -424,7 +424,7 @@
 
   async function loadVacatures() {
     const { data, error } = await db.from('vacatures')
-      .select('id, titel, locatie, plekken, startdatum, bruto_uurloon, netto_salaris, uren_per_week, werkdagen, werkperiode, contract_type, overwerk, werkzaamheden, ervaring, taal, certificaten, rijbewijs_b, accommodatie, vervoer, reis_km, reis_min, zorgverzekering, pbm, betaaldag')
+      .select('*')
       .eq('status', 'Open')
       .order('startdatum', { ascending: true });
 
