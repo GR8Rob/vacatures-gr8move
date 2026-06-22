@@ -383,6 +383,7 @@
     <div class="filters">
       <input class="filter-input" type="text" id="filter-zoek" placeholder="Zoeken op functie of locatie…" />
       <div class="filter-chips" id="filter-chips">
+        <button class="filter-chip active" data-start="all">Alle</button>
         <button class="filter-chip" data-start="zsm">Z.s.m.</button>
         <button class="filter-chip" data-start="week">Komende week</button>
         <button class="filter-chip" data-start="later">Daarna</button>
@@ -418,7 +419,7 @@
       contractType: 'Type contract', overtime: 'Overwerk', accommodation: 'Accommodatie',
       transport: 'Vervoer', travelDist: 'Reisafstand', healthIns: 'Zorgverzekering', ppe: 'PBM',
       spots: (n) => n === 1 ? '1 plek' : n + ' plekken',
-      chipZsm: 'Z.s.m.', chipWeek: 'Komende week', chipLater: 'Daarna',
+      chipAll: 'Alle', chipZsm: 'Z.s.m.', chipWeek: 'Komende week', chipLater: 'Daarna',
       pw: 'Toegangscode', pwBtn: 'Toegang',
       pwSub: 'Vacatureportaal — exclusief voor partners', pwErr: 'Onjuiste toegangscode.',
       pwEmpty: 'Vul een toegangscode in.',
@@ -437,7 +438,7 @@
       contractType: 'Contract type', overtime: 'Overtime', accommodation: 'Accommodation',
       transport: 'Transport', travelDist: 'Travel distance', healthIns: 'Health insurance', ppe: 'PPE',
       spots: (n) => n === 1 ? '1 position' : n + ' positions',
-      chipZsm: 'ASAP', chipWeek: 'Next week', chipLater: 'Later',
+      chipAll: 'All', chipZsm: 'ASAP', chipWeek: 'Next week', chipLater: 'Later',
       pw: 'Access code', pwBtn: 'Enter',
       pwSub: 'Vacancy portal — exclusive for partners', pwErr: 'Incorrect access code.',
       pwEmpty: 'Please enter an access code.',
@@ -462,6 +463,7 @@
     document.getElementById('no-vac').textContent         = t('noVac');
     const cnt = allVacatures.length;
     if (cnt) document.getElementById('page-sub-count').textContent = t('subCount', cnt);
+    document.querySelector('.filter-chip[data-start="all"]').textContent  = t('chipAll');
     document.querySelector('.filter-chip[data-start="zsm"]').textContent  = t('chipZsm');
     document.querySelector('.filter-chip[data-start="week"]').textContent = t('chipWeek');
     document.querySelector('.filter-chip[data-start="later"]').textContent = t('chipLater');
@@ -563,17 +565,18 @@
 
     document.getElementById('filter-zoek').addEventListener('input', applyFilters);
 
+    function setActiveChip(val) {
+      activeChip = (val === 'all') ? null : val;
+      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      const target = val === null ? 'all' : val;
+      const btn = document.querySelector(`.filter-chip[data-start="${target}"]`);
+      if (btn) btn.classList.add('active');
+    }
+
     document.querySelectorAll('.filter-chip').forEach(btn => {
       btn.addEventListener('click', function() {
         const val = this.dataset.start;
-        if (activeChip === val) {
-          activeChip = null;
-          this.classList.remove('active');
-        } else {
-          activeChip = val;
-          document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-        }
+        setActiveChip(val === activeChip ? null : val);
         applyFilters();
       });
     });
