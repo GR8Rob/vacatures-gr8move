@@ -351,10 +351,16 @@
 <div id="app">
   <header>
     <div class="header-logo">GR8 Move</div>
-    <div class="header-tagline">Actuele vacatures</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="header-tagline" id="header-tagline">Actuele vacatures</div>
+      <div style="display:flex;border:1.5px solid var(--grey-200);border-radius:6px;overflow:hidden;font-size:12px;font-weight:700;">
+        <button id="lang-nl" onclick="setLang('nl')" style="padding:4px 10px;background:var(--green);color:#fff;border:none;cursor:pointer;">NL</button>
+        <button id="lang-en" onclick="setLang('en')" style="padding:4px 10px;background:#fff;color:var(--grey-600);border:none;cursor:pointer;">EN</button>
+      </div>
+    </div>
   </header>
   <main>
-    <div class="page-title">Openstaande vacatures</div>
+    <div class="page-title" id="page-title">Openstaande vacatures</div>
     <div class="page-sub" id="page-sub-count">Actuele vacatures van GR8 Move</div>
 
     <div class="filters">
@@ -373,6 +379,70 @@
   const CONTACT_EMAIL    = 'info@gr8move.nl';
   const SESSION_KEY      = 'gr8_vacatures_auth';
 
+  let lang = localStorage.getItem('gr8_vacatures_lang') || 'nl';
+
+  const T = {
+    nl: {
+      tagline: 'Actuele vacatures', pageTitle: 'Openstaande vacatures',
+      subCount: (n) => n + ' open ' + (n === 1 ? 'vacature' : 'vacatures'),
+      placeholder: 'Zoeken op functie of locatie…', loading: 'Vacatures laden…',
+      noVac: 'Geen vacatures gevonden.', applyText: 'Interesse? Neem contact op met GR8 Move.',
+      applyBtn: 'Solliciteer', start: 'Start:', zsm: 'Z.s.m.',
+      duties: 'Werkzaamheden', requirements: 'Vereisten', conditions: 'Arbeidsvoorwaarden',
+      benefits: 'Overige voordelen', experience: 'Ervaring', language: 'Taal',
+      certificates: 'Certificaten', drivingLicense: 'Rijbewijs B', required: 'Vereist',
+      hoursPerWeek: 'Uren per week', workPeriod: 'Werkperiode', grossRate: 'Bruto uurloon',
+      netSalary: 'Netto salaris (indicatie)', workDays: 'Werkdagen', payDay: 'Betaaldag',
+      contractType: 'Type contract', overtime: 'Overwerk', accommodation: 'Accommodatie',
+      transport: 'Vervoer', travelDist: 'Reisafstand', healthIns: 'Zorgverzekering', ppe: 'PBM',
+      spots: (n) => n + ' plekken', pw: 'Toegangscode', pwBtn: 'Toegang',
+      pwSub: 'Vacatureportaal — exclusief voor partners', pwErr: 'Onjuiste toegangscode.',
+      pwEmpty: 'Vul een toegangscode in.',
+    },
+    en: {
+      tagline: 'Current vacancies', pageTitle: 'Open vacancies',
+      subCount: (n) => n + ' open ' + (n === 1 ? 'vacancy' : 'vacancies'),
+      placeholder: 'Search by job title or location…', loading: 'Loading vacancies…',
+      noVac: 'No vacancies found.', applyText: 'Interested? Contact GR8 Move.',
+      applyBtn: 'Apply', start: 'Start:', zsm: 'ASAP',
+      duties: 'Job duties', requirements: 'Requirements', conditions: 'Employment conditions',
+      benefits: 'Additional benefits', experience: 'Experience', language: 'Language',
+      certificates: 'Certificates', drivingLicense: 'Driving license B', required: 'Required',
+      hoursPerWeek: 'Hours per week', workPeriod: 'Work period', grossRate: 'Gross hourly rate',
+      netSalary: 'Net salary (indication)', workDays: 'Working days', payDay: 'Payment day',
+      contractType: 'Contract type', overtime: 'Overtime', accommodation: 'Accommodation',
+      transport: 'Transport', travelDist: 'Travel distance', healthIns: 'Health insurance', ppe: 'PPE',
+      spots: (n) => n + ' positions', pw: 'Access code', pwBtn: 'Enter',
+      pwSub: 'Vacancy portal — exclusive for partners', pwErr: 'Incorrect access code.',
+      pwEmpty: 'Please enter an access code.',
+    }
+  };
+
+  function t(key, arg) {
+    const v = T[lang][key];
+    return typeof v === 'function' ? v(arg) : v;
+  }
+
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('gr8_vacatures_lang', l);
+    document.getElementById('lang-nl').style.background = l === 'nl' ? 'var(--green)' : '#fff';
+    document.getElementById('lang-nl').style.color      = l === 'nl' ? '#fff' : 'var(--grey-600)';
+    document.getElementById('lang-en').style.background = l === 'en' ? 'var(--green)' : '#fff';
+    document.getElementById('lang-en').style.color      = l === 'en' ? '#fff' : 'var(--grey-600)';
+    document.getElementById('header-tagline').textContent = t('tagline');
+    document.getElementById('page-title').textContent     = t('pageTitle');
+    document.getElementById('filter-zoek').placeholder    = t('placeholder');
+    document.getElementById('no-vac').textContent         = t('noVac');
+    const cnt = allVacatures.length;
+    if (cnt) document.getElementById('page-sub-count').textContent = t('subCount', cnt);
+    if (allVacatures.length) renderVacatures(allVacatures);
+    // Password screen labels
+    document.getElementById('pw-sub').textContent  = t('pwSub');
+    document.getElementById('pw-label').textContent = t('pw');
+    document.getElementById('pw-btn').textContent   = t('pwBtn');
+  }
+
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
@@ -384,6 +454,8 @@
   }
 
   async function init() {
+    // Apply saved language
+    setLang(lang);
     // Check saved session
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved === 'ok') { showApp(); return; }
@@ -397,15 +469,15 @@
 
     async function tryLogin() {
       const pw = input.value.trim();
-      if (!pw) { err.textContent = 'Vul een toegangscode in.'; return; }
+      if (!pw) { err.textContent = t('pwEmpty'); return; }
       btn.textContent = '…'; btn.disabled = true; err.textContent = '';
       const ok = await checkPassword(pw);
       if (ok) {
         sessionStorage.setItem(SESSION_KEY, 'ok');
         showApp();
       } else {
-        err.textContent = 'Onjuiste toegangscode.';
-        btn.textContent = 'Toegang'; btn.disabled = false;
+        err.textContent = t('pwErr');
+        btn.textContent = t('pwBtn'); btn.disabled = false;
         input.select();
       }
     }
@@ -436,16 +508,17 @@
     }
 
     allVacatures = data;
-    document.getElementById('page-sub-count').textContent =
-      data.length + ' open ' + (data.length === 1 ? 'vacature' : 'vacatures');
+    document.getElementById('page-sub-count').textContent = t('subCount', data.length);
     renderVacatures(data);
 
     document.getElementById('filter-zoek').addEventListener('input', function() {
       const q = this.value.toLowerCase();
       const filtered = allVacatures.filter(v =>
         (v.titel || '').toLowerCase().includes(q) ||
+        (v.titel_en || '').toLowerCase().includes(q) ||
         (v.locatie || '').toLowerCase().includes(q) ||
-        (v.werkzaamheden || '').toLowerCase().includes(q)
+        (v.werkzaamheden || '').toLowerCase().includes(q) ||
+        (v.werkzaamheden_en || '').toLowerCase().includes(q)
       );
       renderVacatures(filtered);
     });
@@ -474,22 +547,25 @@
     noVac.style.display = 'none';
 
     container.innerHTML = list.map(v => {
+      const titel = (lang === 'en' && v.titel_en) ? v.titel_en : (v.titel || '—');
+      const werkz = (lang === 'en' && v.werkzaamheden_en) ? v.werkzaamheden_en : (v.werkzaamheden || null);
+      const locale = lang === 'en' ? 'en-GB' : 'nl-NL';
       const startTxt = v.startdatum
-        ? new Date(v.startdatum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
-        : 'Z.s.m.';
+        ? new Date(v.startdatum).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+        : t('zsm');
 
       const metaItems = [
         v.locatie ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${v.locatie}</div>` : '',
-        v.uren_per_week ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${v.uren_per_week} uur/week</div>` : '',
+        v.uren_per_week ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${v.uren_per_week} ${lang==='en'?'hrs/week':'uur/week'}</div>` : '',
         v.bruto_uurloon ? `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${v.bruto_uurloon}</div>` : '',
-        `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Start: ${startTxt}</div>`,
+        `<div class="vac-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${t('start')} ${startTxt}</div>`,
       ].filter(Boolean).join('');
 
       // Detail sections
-      const werkzaamhedenHtml = fmt(v.werkzaamheden) ? `
+      const werkzaamhedenHtml = werkz ? `
         <div class="detail-field">
-          <div class="detail-field-label">Werkzaamheden</div>
-          <div class="detail-field-value" style="white-space:pre-line;">${v.werkzaamheden}</div>
+          <div class="detail-field-label">${t('duties')}</div>
+          <div class="detail-field-value" style="white-space:pre-line;">${werkz}</div>
         </div>` : '';
 
       const ervaringTags = tags(v.ervaring);
@@ -497,21 +573,21 @@
       const certTags = tags(v.certificaten);
 
       const vereistenHtml = [
-        ervaringTags ? `<div class="detail-field"><div class="detail-field-label">Ervaring</div><div class="detail-tags">${ervaringTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
-        taalTags ? `<div class="detail-field"><div class="detail-field-label">Taal</div><div class="detail-tags">${taalTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
-        certTags ? `<div class="detail-field"><div class="detail-field-label">Certificaten</div><div class="detail-tags">${certTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
-        fmt(v.rijbewijs_b) === 'Ja' ? `<div class="detail-field"><div class="detail-field-label">Rijbewijs B</div><div class="detail-field-value">Vereist</div></div>` : '',
+        ervaringTags ? `<div class="detail-field"><div class="detail-field-label">${t('experience')}</div><div class="detail-tags">${ervaringTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
+        taalTags ? `<div class="detail-field"><div class="detail-field-label">${t('language')}</div><div class="detail-tags">${taalTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
+        certTags ? `<div class="detail-field"><div class="detail-field-label">${t('certificates')}</div><div class="detail-tags">${certTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
+        fmt(v.rijbewijs_b) === 'Ja' ? `<div class="detail-field"><div class="detail-field-label">${t('drivingLicense')}</div><div class="detail-field-value">${t('required')}</div></div>` : '',
       ].filter(Boolean).join('');
 
       const arbeidsHtml = [
-        v.uren_per_week ? `<div class="detail-field"><div class="detail-field-label">Uren per week</div><div class="detail-field-value">${v.uren_per_week} uur</div></div>` : '',
-        fmt(v.werkperiode) ? `<div class="detail-field"><div class="detail-field-label">Werkperiode</div><div class="detail-field-value">${v.werkperiode}</div></div>` : '',
-        fmt(v.bruto_uurloon) ? `<div class="detail-field"><div class="detail-field-label">Bruto uurloon</div><div class="detail-field-value">${v.bruto_uurloon}</div></div>` : '',
-        fmt(v.netto_salaris) ? `<div class="detail-field"><div class="detail-field-label">Netto salaris (indicatie)</div><div class="detail-field-value">${v.netto_salaris}</div></div>` : '',
-        fmt(v.werkdagen) ? `<div class="detail-field"><div class="detail-field-label">Werkdagen</div><div class="detail-field-value">${v.werkdagen}</div></div>` : '',
-        fmt(v.betaaldag) ? `<div class="detail-field"><div class="detail-field-label">Betaaldag</div><div class="detail-field-value">${v.betaaldag}</div></div>` : '',
-        fmt(v.contract_type) ? `<div class="detail-field"><div class="detail-field-label">Type contract</div><div class="detail-field-value">${v.contract_type}</div></div>` : '',
-        fmt(v.overwerk) ? `<div class="detail-field"><div class="detail-field-label">Overwerk</div><div class="detail-field-value">${v.overwerk}</div></div>` : '',
+        v.uren_per_week ? `<div class="detail-field"><div class="detail-field-label">${t('hoursPerWeek')}</div><div class="detail-field-value">${v.uren_per_week} ${lang==='en'?'hrs':'uur'}</div></div>` : '',
+        fmt(v.werkperiode) ? `<div class="detail-field"><div class="detail-field-label">${t('workPeriod')}</div><div class="detail-field-value">${v.werkperiode}</div></div>` : '',
+        fmt(v.bruto_uurloon) ? `<div class="detail-field"><div class="detail-field-label">${t('grossRate')}</div><div class="detail-field-value">${v.bruto_uurloon}</div></div>` : '',
+        fmt(v.netto_salaris) ? `<div class="detail-field"><div class="detail-field-label">${t('netSalary')}</div><div class="detail-field-value">${v.netto_salaris}</div></div>` : '',
+        fmt(v.werkdagen) ? `<div class="detail-field"><div class="detail-field-label">${t('workDays')}</div><div class="detail-field-value">${v.werkdagen}</div></div>` : '',
+        fmt(v.betaaldag) ? `<div class="detail-field"><div class="detail-field-label">${t('payDay')}</div><div class="detail-field-value">${v.betaaldag}</div></div>` : '',
+        fmt(v.contract_type) ? `<div class="detail-field"><div class="detail-field-label">${t('contractType')}</div><div class="detail-field-value">${v.contract_type}</div></div>` : '',
+        fmt(v.overwerk) ? `<div class="detail-field"><div class="detail-field-label">${t('overtime')}</div><div class="detail-field-value">${v.overwerk}</div></div>` : '',
       ].filter(Boolean).join('');
 
       const voertuigTags = tags(v.vervoer);
@@ -519,11 +595,11 @@
       const reisStr = v.reis_km && v.reis_min ? `${v.reis_km} km / ${v.reis_min} min` : v.reis_km ? `${v.reis_km} km` : v.reis_min ? `${v.reis_min} min` : null;
 
       const voordelenHtml = [
-        fmt(v.accommodatie) ? `<div class="detail-field"><div class="detail-field-label">Accommodatie</div><div class="detail-field-value">${v.accommodatie}</div></div>` : '',
-        voertuigTags ? `<div class="detail-field"><div class="detail-field-label">Vervoer</div><div class="detail-tags">${voertuigTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
-        reisStr ? `<div class="detail-field"><div class="detail-field-label">Reisafstand</div><div class="detail-field-value">${reisStr}</div></div>` : '',
-        fmt(v.zorgverzekering) ? `<div class="detail-field"><div class="detail-field-label">Zorgverzekering</div><div class="detail-field-value">${v.zorgverzekering}</div></div>` : '',
-        pbmTags ? `<div class="detail-field"><div class="detail-field-label">Persoonlijke beschermingsmiddelen</div><div class="detail-tags">${pbmTags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div></div>` : '',
+        fmt(v.accommodatie) ? `<div class="detail-field"><div class="detail-field-label">${t('accommodation')}</div><div class="detail-field-value">${v.accommodatie}</div></div>` : '',
+        voertuigTags ? `<div class="detail-field"><div class="detail-field-label">${t('transport')}</div><div class="detail-tags">${voertuigTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
+        reisStr ? `<div class="detail-field"><div class="detail-field-label">${t('travelDist')}</div><div class="detail-field-value">${reisStr}</div></div>` : '',
+        fmt(v.zorgverzekering) ? `<div class="detail-field"><div class="detail-field-label">${t('healthIns')}</div><div class="detail-field-value">${v.zorgverzekering}</div></div>` : '',
+        pbmTags ? `<div class="detail-field"><div class="detail-field-label">${t('ppe')}</div><div class="detail-tags">${pbmTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
       ].filter(Boolean).join('');
 
       const hasDetail = werkzaamhedenHtml || vereistenHtml || arbeidsHtml || voordelenHtml;
@@ -531,24 +607,24 @@
       return `<div class="vac-card" data-id="${v.id}">
         <div class="vac-card-header">
           <div style="flex:1;min-width:0;">
-            <div class="vac-title">${v.titel || '—'}</div>
+            <div class="vac-title">${titel}</div>
             <div class="vac-meta">${metaItems}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-            ${v.plekken > 1 ? `<span class="vac-plekken">${v.plekken} plekken</span>` : ''}
+            ${v.plekken > 1 ? `<span class="vac-plekken">${t('spots', v.plekken)}</span>` : ''}
             <svg class="vac-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
         ${hasDetail ? `<div class="vac-detail">
           ${werkzaamhedenHtml ? `<div style="margin-bottom:24px;">${werkzaamhedenHtml}</div>` : ''}
           <div class="detail-grid">
-            ${vereistenHtml ? `<div><div class="detail-section-title">Vereisten</div>${vereistenHtml}</div>` : '<div></div>'}
-            ${arbeidsHtml ? `<div><div class="detail-section-title">Arbeidsvoorwaarden</div>${arbeidsHtml}</div>` : '<div></div>'}
+            ${vereistenHtml ? `<div><div class="detail-section-title">${t('requirements')}</div>${vereistenHtml}</div>` : '<div></div>'}
+            ${arbeidsHtml ? `<div><div class="detail-section-title">${t('conditions')}</div>${arbeidsHtml}</div>` : '<div></div>'}
           </div>
-          ${voordelenHtml ? `<div><div class="detail-section-title">Overige voordelen</div><div class="detail-grid">${voordelenHtml}</div></div>` : ''}
+          ${voordelenHtml ? `<div><div class="detail-section-title">${t('benefits')}</div><div class="detail-grid">${voordelenHtml}</div></div>` : ''}
           <div class="apply-bar">
-            <div class="apply-text">Interesse? Neem contact op met GR8 Move.</div>
-            <a class="apply-btn" href="mailto:${CONTACT_EMAIL}?subject=Sollicitatie: ${encodeURIComponent(v.titel || 'Vacature')}">Solliciteer</a>
+            <div class="apply-text">${t('applyText')}</div>
+            <a class="apply-btn" href="mailto:${CONTACT_EMAIL}?subject=${lang==='en'?'Application':'Sollicitatie'}: ${encodeURIComponent(titel)}">${t('applyBtn')}</a>
           </div>
         </div>` : ''}
       </div>`;
