@@ -369,12 +369,12 @@
 
 <script>
   const SUPABASE_URL     = 'https://ilohrydvgmrkzzulbvmu.supabase.co';
-  const SUPABASE_ANON    = 'sb_publishable_VGfOAz7jJDgyMLYbyfsOjg_9dmAAdL7';
+  const SUPABASE_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlsb2hyeWR2Z21ya3p6dWxidm11Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDMzOTQ4NiwiZXhwIjoyMDk1OTE1NDg2fQ._F_5K__5aQt_qlFMw39HIotki4iTKfSY7hSSvn9dwvE';
   const CONTACT_EMAIL    = 'info@gr8move.nl';
   const SESSION_KEY      = 'gr8_vacatures_auth';
 
   const { createClient } = supabase;
-  const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
   async function sha256(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
