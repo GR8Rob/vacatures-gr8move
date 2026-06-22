@@ -402,7 +402,8 @@
   const CONTACT_EMAIL    = 'info@gr8move.nl';
   const SESSION_KEY      = 'gr8_vacatures_auth';
 
-  let lang = localStorage.getItem('gr8_vacatures_lang') || 'nl';
+  const urlLang = new URLSearchParams(window.location.search).get('lang');
+  let lang = (urlLang === 'en' || urlLang === 'nl') ? urlLang : (localStorage.getItem('gr8_vacatures_lang') || 'nl');
 
   const T = {
     nl: {
