@@ -270,6 +270,33 @@
     }
     @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }
 
+    @media (max-width: 640px) {
+      /* Password screen */
+      #pw-card { width: calc(100% - 32px); padding: 36px 24px 28px; }
+
+      /* Header */
+      header { padding: 0 16px; height: 54px; }
+
+      /* Main */
+      main { padding: 20px 14px 48px; }
+      .page-title { font-size: 22px; }
+      .page-sub { font-size: 13px; margin-bottom: 20px; }
+
+      /* Filters: zoekbalk full-width, chips op eigen rij */
+      .filters { flex-direction: column; gap: 8px; margin-bottom: 16px; }
+      .filter-input { min-width: 0; width: 100%; }
+      .filter-chips { gap: 6px; }
+
+      /* Kaarten */
+      .vac-card-header { padding: 14px 16px; gap: 10px; }
+      .vac-title { font-size: 15px; }
+      .vac-meta { gap: 8px; font-size: 12px; }
+      .vac-detail { padding: 16px; }
+
+      /* Badges stapelen netjes */
+      .vac-plekken, .vac-nieuw { font-size: 11px; padding: 3px 9px; }
+    }
+
     .detail-section-title {
       font-size: 11px;
       font-weight: 700;
