@@ -629,6 +629,23 @@
     return arr.map(s => s === 'Overal' ? 'Overall' : s);
   }
 
+  const LANG_MAP = {
+    'Nederlands':'Dutch','Engels':'English','Duits':'German','Frans':'French',
+    'Spaans':'Spanish','Italiaans':'Italian','Pools':'Polish','Turks':'Turkish',
+    'Arabisch':'Arabic','Kroatisch':'Croatian','Roemeens':'Romanian',
+    'Bulgaars':'Bulgarian','Portugees':'Portuguese','Russisch':'Russian',
+    'Chinees':'Chinese','Japans':'Japanese','Koreaans':'Korean',
+    'Grieks':'Greek','Tsjechisch':'Czech','Slowaaks':'Slovak',
+    'Hongaars':'Hungarian','Zweeds':'Swedish','Noors':'Norwegian',
+    'Deens':'Danish','Fins':'Finnish',
+  };
+  function translateLangTag(tag) {
+    if (lang !== 'en') return tag;
+    const m = tag.match(/^([^\s(]+)(.*)/);
+    if (!m) return tag;
+    return (LANG_MAP[m[1]] || m[1]) + m[2];
+  }
+
   function renderVacatures(list) {
     const container = document.getElementById('vac-list');
     const noVac = document.getElementById('no-vac');
@@ -669,7 +686,7 @@
 
       const vereistenHtml = [
         ervaringTags ? `<div class="detail-field"><div class="detail-field-label">${t('experience')}</div><div class="detail-tags">${ervaringTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
-        taalTags ? `<div class="detail-field"><div class="detail-field-label">${t('language')}</div><div class="detail-tags">${taalTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
+        taalTags ? `<div class="detail-field"><div class="detail-field-label">${t('language')}</div><div class="detail-tags">${taalTags.map(g => `<span class="detail-tag">${translateLangTag(g)}</span>`).join('')}</div></div>` : '',
         certTags ? `<div class="detail-field"><div class="detail-field-label">${t('certificates')}</div><div class="detail-tags">${certTags.map(g => `<span class="detail-tag">${g}</span>`).join('')}</div></div>` : '',
         fmt(v.rijbewijs_b) === 'Ja' ? `<div class="detail-field"><div class="detail-field-label">${t('drivingLicense')}</div><div class="detail-field-value">${t('required')}</div></div>` : '',
       ].filter(Boolean).join('');
